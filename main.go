@@ -45,12 +45,13 @@ func main(){
     mux.HandleFunc("GET /admin/metrics", apiCnfg.handleMetrics)
     mux.HandleFunc("POST /admin/reset", apiCnfg.handleReset)
     mux.HandleFunc("POST /api/validate_chirp", handleValidation)
+    mux.HandleFunc("POST /api/users", apiCnfg.handleCreateUser)
 
     server := http.Server{Handler: mux, Addr: ":" + port};
     fmt.Println("Serving on port ", port)
     err = server.ListenAndServe()
     if err != nil {
-        fmt.Println("Errrorrororrorr")
+        log.Fatal("Errrorrororrorr")
     }
 
 }
