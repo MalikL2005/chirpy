@@ -38,12 +38,13 @@ func (cfg *apiConfig) handleCreateUser(w http.ResponseWriter, r *http.Request){
         return
     }
     
-    fmt.Println(user)
     w.WriteHeader(http.StatusCreated)
-    w.Write([]byte(fmt.Sprintf(`{\n"id": "%s",\n`, user.ID)))
-    w.Write([]byte(fmt.Sprintf(`"created_at": "%s",\n`, user.CreatedAt)))
-    w.Write([]byte(fmt.Sprintf(`"updated_at": "%s",\n`, user.UpdatedAt)))
-    w.Write([]byte(fmt.Sprintf(`"email": "%s",\n}`, user.Email)))
+    json_user, err := json.Marshal(&user)
+    if err != nil {
+        w.Write([]byte(`{"created": "sucessfull", "error":"Marshal failed"}`))
+        return
+    }
+    w.Write(json_user)
 }
 
 
