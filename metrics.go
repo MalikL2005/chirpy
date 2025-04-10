@@ -35,7 +35,7 @@ func (cfg *apiConfig) handleReset (w http.ResponseWriter, r *http.Request){
         w.WriteHeader(http.StatusInternalServerError)
         return
     }
-    w.WriteHeader(http.StatusAccepted)
+    w.WriteHeader(http.StatusOK)
 }
 
 
