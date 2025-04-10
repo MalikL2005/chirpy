@@ -1,26 +1,44 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"sync/atomic"
-    _ "github.com/lib/pq"
+    "log"
+	"github.com/MalikL2005/http_server/internal/database"
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 )
 
 type apiConfig struct {
+    DB *database.Queries
     fileserverHits atomic.Int32
 }
 
 
 func main(){
+    godotenv.Load()
+
+    db_url := os.Getenv("DB_URL")
+    if db_url == "" {
+        log.Fatal("Could not get DB_URL")
+    }
+    db, err := sql.Open("postgres", db_url)
+    if err != nil {
+        log.Fatal(fmt.Sprintf("Database error: %s", err))
+    }
+    db_queries := database.New(db)
+
     const filePathRoot = "."
     const port = "8080"
 
     mux := http.NewServeMux()
-    apiCnfg := apiConfig{}
+    apiCnfg := apiConfig{DB: db_queries}
     apiCnfg.fileserverHits.Store(0)
     mux.Handle("/app/", http.StripPrefix("/app", apiCnfg.middlewareMetricsInc(http.FileServer(http.Dir(filePathRoot)))))
     mux.HandleFunc("GET /api/healthz", handleHealthz)
@@ -30,7 +48,7 @@ func main(){
 
     server := http.Server{Handler: mux, Addr: ":" + port};
     fmt.Println("Serving on port ", port)
-    err := server.ListenAndServe()
+    err = server.ListenAndServe()
     if err != nil {
         fmt.Println("Errrorrororrorr")
     }
