@@ -43,7 +43,24 @@ func (cfg *apiConfig) handleCreateUser(w http.ResponseWriter, r *http.Request){
         w.Write([]byte(`{"created": "sucessfull", "error": "Marshal failed"}`))
         return
     }
-    w.Write(json_user)
+
+    var jsonResponse map[string]any
+    err = json.Unmarshal(json_user, &jsonResponse)
+    if err != nil {
+        w.Write([]byte(`{"created": "sucessfull", "error": "Marshal to json failed"}`))
+        return
+    }
+
+    jsonResponse["email"] = jsonResponse["Email"]
+    delete(jsonResponse, "Email")
+    jsonResponse["id"] = jsonResponse["ID"]
+    delete(jsonResponse, "ID")
+    res, err := json.Marshal(jsonResponse)
+    if err != nil {
+        w.Write([]byte(`{"created": "sucessfull", "error": "Marshal to response failed"}`))
+        return
+    }
+    w.Write([]byte(res))
 }
 
 

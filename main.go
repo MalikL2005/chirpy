@@ -43,6 +43,7 @@ func main(){
     mux.HandleFunc("POST /admin/reset", apiCnfg.handleReset)
     mux.HandleFunc("POST /api/users", apiCnfg.handleCreateUser)
     mux.HandleFunc("POST /api/chirps", apiCnfg.handleCreateChirp)
+    mux.HandleFunc("GET /api/chirps", apiCnfg.handleGetAllChirps)
 
     server := http.Server{Handler: mux, Addr: ":" + port};
     fmt.Println("Serving on port ", port)

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -29,37 +30,24 @@ type Chirp struct {
 }
 
 
-func handleValidation (writer http.ResponseWriter, res *http.Request){
-    defer res.Body.Close()
+func validateChirp (body string) (string, error){
     type validation struct {
         Body string `json:"body"`
     }
-    body, err := io.ReadAll(res.Body)
-    if err != nil {
-        writer.WriteHeader(http.StatusInternalServerError)
-        writer.Write([]byte(`{"error":"Could not read response}"`))
-        return
-    }
     val := validation{}
-    err = json.Unmarshal(body, &val)
+    err := json.Unmarshal([]byte(body), &val)
     if err != nil {
-        writer.WriteHeader(http.StatusInternalServerError)
-        writer.Write([]byte(`{"error":"Could not process json-data"}`))
-        return
+        return "", err
     }
     if len(val.Body) > 140 {
-        writer.WriteHeader(http.StatusBadRequest)
-        writer.Write([]byte(`{"error": "Chirp is too long"}`))
-        return
+        return "", errors.New(fmt.Sprintf("Max length is 140 chars. Chirp is %d characters long", len(body)))
     }
     for _, word := range(unallowed_words){
         if index := strings.Index(strings.ToLower(val.Body), word); index >= 0{
             val.Body = val.Body[:index] + "****" + val.Body[index+len(word):]
         }
     }
-
-    writer.WriteHeader(http.StatusOK)
-    writer.Write(fmt.Appendf([]byte{}, `{"cleaned_body": "%s"}`, val.Body))
+    return val.Body, nil
 }
 
 
@@ -85,6 +73,14 @@ func (cfg *apiConfig) handleCreateChirp(w http.ResponseWriter, r *http.Request){
         w.Write(fmt.Appendf([]byte{}, `"error": "%s"`, err))
         return
     }
+    fmt.Println(json_data["body"])
+
+    json_data["body"], err = validateChirp(string(body))
+    if err != nil {
+        w.WriteHeader(http.StatusBadRequest)
+        w.Write(fmt.Appendf([]byte{}, `"error": "%s"`, err))
+        return
+    }
 
     user_id, ok := json_data["user_id"]
     if !ok {
@@ -93,7 +89,10 @@ func (cfg *apiConfig) handleCreateChirp(w http.ResponseWriter, r *http.Request){
         return
     }
 
-    parsed_uid, err := uuid.Parse(user_id)
+    fmt.Println(json_data)
+    fmt.Println(user_id)
+
+    parsed_uid, err := uuid.Parse(string(user_id))
     if err != nil {
         w.WriteHeader(http.StatusBadRequest)
         w.Write([]byte(`"error": "invalid user id"`))
@@ -120,10 +119,33 @@ func (cfg *apiConfig) handleCreateChirp(w http.ResponseWriter, r *http.Request){
         w.Write([]byte(`{"created": "sucessfull", "error": "Marshal failed"}`))
         return
     }
+
+    var res2 map[string]any
+    err = json.Unmarshal(json_res, &res2)
+    if err != nil {
+        w.Write([]byte(`{"created": "sucessfull", "error": "Unmarshal failed"}`))
+        return
+    }
+
+    res2["body"] = res2["Body"]
+    delete(res2, "Body")
+    res2["user_id"] = res2["UserID"]
+    delete(res2, "UserID")
+
+    json_res, err = json.Marshal(res2)
+    if err != nil {
+        w.Write([]byte(`{"created": "sucessfull", "error": "Unmarshal failed"}`))
+        return
+    }
     
     w.Write([]byte(json_res))
 }
 
+
+
+func (cfg *apiConfig) handleGetAllChirps (w http.ResponseWriter, r *http.Request){
+    
+}
 
 
 
