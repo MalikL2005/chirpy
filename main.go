@@ -44,6 +44,7 @@ func main(){
     mux.HandleFunc("POST /api/users", apiCnfg.handleCreateUser)
     mux.HandleFunc("POST /api/chirps", apiCnfg.handleCreateChirp)
     mux.HandleFunc("GET /api/chirps", apiCnfg.handleGetAllChirps)
+    mux.HandleFunc("GET /api/chirps/{chirpID}", apiCnfg.handleGetSingleChirp)
 
     server := http.Server{Handler: mux, Addr: ":" + port};
     fmt.Println("Serving on port ", port)

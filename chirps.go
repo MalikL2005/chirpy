@@ -112,33 +112,23 @@ func (cfg *apiConfig) handleCreateChirp(w http.ResponseWriter, r *http.Request){
         w.Write([]byte(`"error": "could not create DB entry"`))
         return
     }
+    
+    chirpFormatted := Chirp{
+        ID: chirp.ID,
+        CreatedAt: chirp.CreatedAt,
+        UpdatedAt: chirp.UpdatedAt,
+        UserID: chirp.ID,
+        Body: chirp.Body,
+    }
+
+    jsonResponse, err := json.Marshal(chirpFormatted)
+    if err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        w.Write([]byte(`"error": "Marshal json response failed"`))
+    }
 
     w.WriteHeader(http.StatusCreated)
-    json_res, err := json.Marshal(&chirp)
-    if err != nil {
-        w.Write([]byte(`{"created": "sucessfull", "error": "Marshal failed"}`))
-        return
-    }
-
-    var res2 map[string]any
-    err = json.Unmarshal(json_res, &res2)
-    if err != nil {
-        w.Write([]byte(`{"created": "sucessfull", "error": "Unmarshal failed"}`))
-        return
-    }
-
-    res2["body"] = res2["Body"]
-    delete(res2, "Body")
-    res2["user_id"] = res2["UserID"]
-    delete(res2, "UserID")
-
-    json_res, err = json.Marshal(res2)
-    if err != nil {
-        w.Write([]byte(`{"created": "sucessfull", "error": "Unmarshal failed"}`))
-        return
-    }
-    
-    w.Write([]byte(json_res))
+    w.Write(jsonResponse)
 }
 
 
@@ -171,4 +161,35 @@ func (cfg *apiConfig) handleGetAllChirps (w http.ResponseWriter, r *http.Request
 }
 
 
+func (cfg *apiConfig) handleGetSingleChirp (w http.ResponseWriter, r *http.Request){
+    chirpID, err := uuid.Parse(r.PathValue("chirpID"))
+    if err != nil {
+        w.WriteHeader(http.StatusNotFound)
+        w.Write(fmt.Appendf([]byte{}, `{"error":"%s"}`, err))
+    }
+
+    chirp, err := cfg.DB.GetSingleChirp(r.Context(), chirpID)
+    if err != nil {
+        w.WriteHeader(http.StatusNotFound)
+        w.Write(fmt.Appendf([]byte{}, `{"error":"%s"}`, err))
+    }
+
+    chirpFormatted := Chirp{
+        ID: chirp.ID, 
+        CreatedAt: chirp.CreatedAt,
+        UpdatedAt: chirp.UpdatedAt,
+        UserID: chirp.ID, 
+        Body: chirp.Body,
+    }
+    fmt.Println(chirpFormatted)
+
+    jsonResponse, err := json.Marshal(chirpFormatted)
+    if err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        w.Write(fmt.Appendf([]byte{}, `{"error":"%s"}`, err))
+    }
+
+    w.WriteHeader(http.StatusOK)
+    w.Write(jsonResponse)
+}
 

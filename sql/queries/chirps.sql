@@ -9,3 +9,6 @@ INSERT INTO chirps (id, created_at, updated_at, body, user_id) VALUES (
 
 -- name: GetAllChirps :many
 SELECT * FROM chirps ORDER BY created_at;
+
+-- name: GetSingleChirp :one
+SELECT * FROM chirps WHERE id=$1;
