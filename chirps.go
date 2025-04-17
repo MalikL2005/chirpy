@@ -144,7 +144,30 @@ func (cfg *apiConfig) handleCreateChirp(w http.ResponseWriter, r *http.Request){
 
 
 func (cfg *apiConfig) handleGetAllChirps (w http.ResponseWriter, r *http.Request){
-    
+    chirps, err := cfg.DB.GetAllChirps(r.Context())
+    if err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        w.Write(fmt.Appendf([]byte{}, `{"error": %s}`, err))
+    }
+
+    chirpsFormatted := make([]Chirp, 0)
+    for _, chirp := range chirps{
+        chirpsFormatted = append(chirpsFormatted, Chirp{
+            ID: chirp.ID, 
+            CreatedAt: chirp.CreatedAt,
+            UpdatedAt: chirp.UpdatedAt,
+            UserID: chirp.ID, 
+            Body: chirp.Body,
+        })
+    }
+
+    jsonResponse, err := json.Marshal(chirpsFormatted)
+    if err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        w.Write(fmt.Appendf([]byte{}, `{"error": %s}`, err))
+    }
+    w.WriteHeader(http.StatusOK)
+    w.Write(jsonResponse)
 }
 
 
