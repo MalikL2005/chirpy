@@ -1,7 +1,7 @@
 package main
 
 import (
-	"context"
+    "fmt"
 	"html/template"
 	"net/http"
 	"os"
@@ -30,9 +30,10 @@ func (cfg *apiConfig) handleReset (w http.ResponseWriter, r *http.Request){
         return
     }
     cfg.fileserverHits.Store(0)
-    err := cfg.DB.DeleteAllUsers(context.Background())
+    err := cfg.DB.DeleteAllUsers(r.Context())
     if err != nil {
         w.WriteHeader(http.StatusInternalServerError)
+        w.Write(fmt.Appendf([]byte{}, `"error": "%s"`, err))
         return
     }
     w.WriteHeader(http.StatusOK)

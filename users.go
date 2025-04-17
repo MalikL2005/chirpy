@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 )
@@ -41,7 +40,7 @@ func (cfg *apiConfig) handleCreateUser(w http.ResponseWriter, r *http.Request){
     w.WriteHeader(http.StatusCreated)
     json_user, err := json.Marshal(&user)
     if err != nil {
-        w.Write([]byte(`{"created": "sucessfull", "error":"Marshal failed"}`))
+        w.Write([]byte(`{"created": "sucessfull", "error": "Marshal failed"}`))
         return
     }
     w.Write(json_user)
